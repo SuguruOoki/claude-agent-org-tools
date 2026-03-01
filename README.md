@@ -1,5 +1,7 @@
 # claude-agent-org-tools
 
+> [日本語ドキュメント (Japanese)](./README.ja.md)
+
 Organization-theory based tools for Claude Code Agent Teams.
 
 4 tools derived from manufacturing and software engineering organizational patterns:
@@ -15,11 +17,22 @@ Organization-theory based tools for Claude Code Agent Teams.
 
 ```bash
 cd your-project
+
+# npm
+npx claude-agent-org-tools init
+
+# pnpm
+pnpm dlx claude-agent-org-tools init
+
+# yarn
+yarn dlx claude-agent-org-tools init
+
+# bun
 bunx claude-agent-org-tools init
 ```
 
 This single command:
-1. Places the hook entrypoint at `.claude/hooks/org-tools.ts`
+1. Places the hook entrypoint at `.claude/hooks/org-tools.mjs`
 2. Generates `.claude/org-tools/config.json` with defaults
 3. Merges hook definitions into `.claude/settings.json` (safely, without breaking existing hooks)
 
@@ -46,7 +59,7 @@ claude-org andon <team> "reason" --severity warning  # Warning only (no block)
 
 ## How It Works
 
-A single TypeScript file (`.claude/hooks/org-tools.ts`) handles all hook events:
+A single JavaScript file (`.claude/hooks/org-tools.mjs`) handles all hook events:
 
 ```
 PreToolUse (Write|Edit|Bash)  → Andon check + Topology boundary check
@@ -152,7 +165,7 @@ Contains:
 ```
 .claude/
   hooks/
-    org-tools.ts              # Single hook entrypoint (auto-generated)
+    org-tools.mjs             # Single hook entrypoint (auto-generated)
   org-tools/
     config.json               # Tool enable/disable config
     andon/                    # Andon signal files (per-team)
@@ -164,7 +177,7 @@ Contains:
 
 ## Requirements
 
-- [Bun](https://bun.sh/) runtime
+- Node.js >= 18 (or Bun >= 1.0)
 - Claude Code with hooks support
 
 ## Development
@@ -172,6 +185,7 @@ Contains:
 ```bash
 bun install
 bun test
+bun run build   # Compile TypeScript to dist/
 ```
 
 ## License

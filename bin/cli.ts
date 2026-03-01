@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { runInit } from "../src/commands/init.js";
 import { runEnable, runDisable } from "../src/commands/enable.js";
 import { runStatus } from "../src/commands/status.js";

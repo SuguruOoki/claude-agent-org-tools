@@ -30,7 +30,7 @@ describe("Settings Merger", () => {
       }>;
       expect(preToolUse).toHaveLength(2);
       expect(preToolUse[0].hooks[0].command).toBe("echo existing");
-      expect(preToolUse[1].hooks[0].command).toContain("org-tools.ts");
+      expect(preToolUse[1].hooks[0].command).toContain("org-tools.mjs");
     });
 
     it("does not duplicate org-tools hooks on repeated calls", () => {

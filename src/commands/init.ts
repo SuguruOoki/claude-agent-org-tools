@@ -1,12 +1,13 @@
-import { mkdir, copyFile, access, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, copyFile, access } from "node:fs/promises";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { mergeSettingsFile } from "../settings-merger.js";
 import { getDefaultConfig, saveConfig, loadConfig } from "../config.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 function getTemplateDir(): string {
-  // import.meta.dir resolves to the directory of this file (src/commands/)
-  // Templates are at src/templates/
-  return join(import.meta.dir, "..", "templates");
+  return join(__dirname, "..", "templates");
 }
 
 async function fileExists(path: string): Promise<boolean> {
@@ -31,9 +32,14 @@ export async function runInit(projectDir: string): Promise<void> {
     await mkdir(dir, { recursive: true });
   }
 
-  // 2. Copy self-contained hook script to .claude/hooks/org-tools.ts
-  const hookDest = join(projectDir, ".claude", "hooks", "org-tools.ts");
-  const hookSource = join(getTemplateDir(), "org-tools-hook.ts");
+  // 2. Copy self-contained hook script to .claude/hooks/org-tools.mjs
+  const hookDest = join(projectDir, ".claude", "hooks", "org-tools.mjs");
+  // Try compiled JS first (dist/), then fall back to TS source
+  const hookSourceJs = join(getTemplateDir(), "org-tools-hook.js");
+  const hookSourceTs = join(getTemplateDir(), "org-tools-hook.ts");
+  const hookSource = (await fileExists(hookSourceJs))
+    ? hookSourceJs
+    : hookSourceTs;
   await copyFile(hookSource, hookDest);
 
   // 3. Generate config.json (if not exists)

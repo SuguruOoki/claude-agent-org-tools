@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-const ORG_TOOLS_MARKER = "org-tools.ts";
+const ORG_TOOLS_MARKER = "org-tools.mjs";
 
 interface HookEntry {
   matcher?: string;
@@ -29,7 +29,7 @@ function getHookDefinitions(): {
       hooks: [
         {
           type: "command",
-          command: `bun "$CLAUDE_PROJECT_DIR/.claude/hooks/org-tools.ts" pre-tool-use`,
+          command: `node "$CLAUDE_PROJECT_DIR/.claude/hooks/org-tools.mjs" pre-tool-use`,
         },
       ],
     },
@@ -38,7 +38,7 @@ function getHookDefinitions(): {
       hooks: [
         {
           type: "command",
-          command: `bun "$CLAUDE_PROJECT_DIR/.claude/hooks/org-tools.ts" post-tool-use`,
+          command: `node "$CLAUDE_PROJECT_DIR/.claude/hooks/org-tools.mjs" post-tool-use`,
         },
       ],
     },
@@ -46,7 +46,7 @@ function getHookDefinitions(): {
       hooks: [
         {
           type: "command",
-          command: `bun "$CLAUDE_PROJECT_DIR/.claude/hooks/org-tools.ts" stop`,
+          command: `node "$CLAUDE_PROJECT_DIR/.claude/hooks/org-tools.mjs" stop`,
         },
       ],
     },
@@ -55,7 +55,7 @@ function getHookDefinitions(): {
 
 function hasOrgToolsHook(entries: HookEntry[]): boolean {
   return entries.some((entry) =>
-    entry.hooks.some((h) => h.command.includes(ORG_TOOLS_MARKER)),
+    entry.hooks.some((h) => h.command.includes("org-tools")),
   );
 }
 
@@ -83,7 +83,7 @@ export function removeHooks(existing: ClaudeSettings): ClaudeSettings {
   for (const key of ["PreToolUse", "PostToolUse", "Stop"] as const) {
     const current = (hooks[key] as HookEntry[] | undefined) ?? [];
     hooks[key] = current.filter(
-      (entry) => !entry.hooks.some((h) => h.command.includes(ORG_TOOLS_MARKER)),
+      (entry) => !entry.hooks.some((h) => h.command.includes("org-tools")),
     );
     if ((hooks[key] as HookEntry[]).length === 0) {
       delete hooks[key];

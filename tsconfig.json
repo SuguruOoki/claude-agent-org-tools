@@ -8,8 +8,10 @@
     "skipLibCheck": true,
     "outDir": "dist",
     "rootDir": ".",
-    "types": ["bun-types"],
+    "declaration": true,
+    "types": ["node"],
     "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "bin/**/*.ts", "tests/**/*.ts"]
+  "include": ["src/**/*.ts", "bin/**/*.ts"],
+  "exclude": ["tests/**/*.ts", "node_modules"]
 }

@@ -1,7 +1,8 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 // claude-agent-org-tools: Self-contained hook entrypoint
 // This file is auto-generated. Do not edit manually.
-// Re-generate with: bunx claude-agent-org-tools init
+// Re-generate with: npx claude-agent-org-tools init
+// @ts-nocheck
 
 import {
   readFileSync,
@@ -12,50 +13,10 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 
-// --- Types ---
-
-interface ToolConfig {
-  enabled: boolean;
-  [key: string]: unknown;
-}
-interface OrgConfig {
-  tools: {
-    andon: ToolConfig;
-    topology: ToolConfig & { configPath: string };
-    raci: ToolConfig & { configPath: string };
-    orgMemory: ToolConfig & { outputDir: string };
-  };
-}
-
-interface AndonFile {
-  severity: string;
-  reason: string;
-}
-
-interface TopoAgent {
-  name: string;
-  owns?: string[];
-  interactionMode?: string;
-}
-
-interface RaciEntry {
-  taskPattern: string;
-  accountable: string;
-  consulted: string[];
-  informed: string[];
-}
-
-interface TaskData {
-  id?: string;
-  subject?: string;
-  status?: string;
-  owner?: string;
-}
-
 // --- Config ---
 
-function loadConfig(projectDir: string): OrgConfig {
-  const defaults: OrgConfig = {
+function loadConfig(projectDir) {
+  const defaults = {
     tools: {
       andon: { enabled: true },
       topology: {
@@ -90,11 +51,9 @@ function loadConfig(projectDir: string): OrgConfig {
 
 // --- Andon ---
 
-function checkAndon(
-  projectDir: string,
-): { block: boolean; reason: string } | null {
+function checkAndon(projectDir) {
   const dir = join(projectDir, ".claude", "org-tools", "andon");
-  let files: string[];
+  let files;
   try {
     files = readdirSync(dir).filter((f) => f.endsWith(".json"));
   } catch {
@@ -104,9 +63,7 @@ function checkAndon(
 
   for (const file of files) {
     try {
-      const data: AndonFile = JSON.parse(
-        readFileSync(join(dir, file), "utf-8"),
-      );
+      const data = JSON.parse(readFileSync(join(dir, file), "utf-8"));
       const team = file.replace(/\.json$/, "");
       if (data.severity === "critical") {
         return {
@@ -126,7 +83,7 @@ function checkAndon(
 
 // --- Topology ---
 
-function matchesPattern(filePath: string, pattern: string): boolean {
+function matchesPattern(filePath, pattern) {
   if (pattern.endsWith("/**")) {
     return filePath.startsWith(pattern.slice(0, -2));
   }
@@ -138,24 +95,21 @@ function matchesPattern(filePath: string, pattern: string): boolean {
   return filePath === pattern;
 }
 
-function checkTopology(
-  projectDir: string,
-  toolInput: Record<string, unknown>,
-): { block: boolean; reason: string } | null {
+function checkTopology(projectDir, toolInput) {
   const configPath = join(
     projectDir,
     ".claude",
     "org-tools",
     "topology.json",
   );
-  let config: { agents: TopoAgent[] };
+  let config;
   try {
     config = JSON.parse(readFileSync(configPath, "utf-8"));
   } catch {
     return null;
   }
 
-  const filePath = toolInput.file_path as string | undefined;
+  const filePath = toolInput.file_path;
   if (!filePath) return null;
 
   const owner = config.agents.find((a) =>
@@ -174,21 +128,17 @@ function checkTopology(
 
 // --- RACI ---
 
-function handleRaci(
-  projectDir: string,
-  toolInput: Record<string, unknown>,
-  configPath: string,
-): void {
+function handleRaci(projectDir, toolInput, configPath) {
   if (toolInput.status !== "completed") return;
   const fullPath = join(projectDir, configPath);
-  let config: { matrix: RaciEntry[] };
+  let config;
   try {
     config = JSON.parse(readFileSync(fullPath, "utf-8"));
   } catch {
     return;
   }
 
-  const subject = (toolInput.subject as string) ?? "";
+  const subject = toolInput.subject ?? "";
   const entry = config.matrix.find((e) =>
     new RegExp(e.taskPattern, "i").test(subject),
   );
@@ -220,10 +170,10 @@ function handleRaci(
 
 // --- Organizational Memory ---
 
-function generateRetro(projectDir: string, outputDir: string): void {
+function generateRetro(projectDir, outputDir) {
   const home = process.env.HOME ?? process.env.USERPROFILE ?? "/tmp";
   const teamsDir = join(home, ".claude", "teams");
-  let teamNames: string[];
+  let teamNames;
   try {
     teamNames = readdirSync(teamsDir, { withFileTypes: true })
       .filter((e) => e.isDirectory() && !e.name.startsWith("."))
@@ -243,7 +193,7 @@ function generateRetro(projectDir: string, outputDir: string): void {
 
   for (const team of teamNames) {
     const tasksDir = join(home, ".claude", "tasks", team);
-    let taskFiles: string[];
+    let taskFiles;
     try {
       taskFiles = readdirSync(tasksDir).filter((f) => f.endsWith(".json"));
     } catch {
@@ -251,7 +201,7 @@ function generateRetro(projectDir: string, outputDir: string): void {
     }
     if (taskFiles.length === 0) continue;
 
-    const tasks: TaskData[] = [];
+    const tasks = [];
     for (const f of taskFiles) {
       try {
         const d = JSON.parse(readFileSync(join(tasksDir, f), "utf-8"));
@@ -306,7 +256,7 @@ function generateRetro(projectDir: string, outputDir: string): void {
 
 // --- Main ---
 
-function readStdin(): string {
+function readStdin() {
   try {
     return readFileSync(0, "utf-8");
   } catch {
@@ -314,11 +264,11 @@ function readStdin(): string {
   }
 }
 
-function main(): void {
+function main() {
   const hookType = process.argv[2];
   if (!hookType) {
     process.stderr.write(
-      "Usage: org-tools.ts <pre-tool-use|post-tool-use|stop>\n",
+      "Usage: org-tools.mjs <pre-tool-use|post-tool-use|stop>\n",
     );
     process.exit(1);
   }
@@ -327,7 +277,7 @@ function main(): void {
   const config = loadConfig(projectDir);
 
   if (hookType === "pre-tool-use") {
-    let input: Record<string, unknown> = {};
+    let input = {};
     try {
       const raw = readStdin();
       if (raw.trim()) input = JSON.parse(raw);
@@ -345,10 +295,7 @@ function main(): void {
       }
     }
     if (config.tools.topology.enabled && input.tool_input) {
-      const result = checkTopology(
-        projectDir,
-        input.tool_input as Record<string, unknown>,
-      );
+      const result = checkTopology(projectDir, input.tool_input);
       if (result?.block) {
         process.stdout.write(
           JSON.stringify({ decision: "block", reason: result.reason }),
@@ -357,7 +304,7 @@ function main(): void {
       }
     }
   } else if (hookType === "post-tool-use") {
-    let input: Record<string, unknown> = {};
+    let input = {};
     try {
       const raw = readStdin();
       if (raw.trim()) input = JSON.parse(raw);
@@ -366,11 +313,7 @@ function main(): void {
     }
 
     if (config.tools.raci.enabled && input.tool_input) {
-      handleRaci(
-        projectDir,
-        input.tool_input as Record<string, unknown>,
-        config.tools.raci.configPath,
-      );
+      handleRaci(projectDir, input.tool_input, config.tools.raci.configPath);
     }
   } else if (hookType === "stop") {
     if (config.tools.orgMemory.enabled) {
