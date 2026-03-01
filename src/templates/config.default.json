@@ -1,0 +1,19 @@
+{
+  "tools": {
+    "andon": {
+      "enabled": true
+    },
+    "topology": {
+      "enabled": false,
+      "configPath": ".claude/org-tools/topology.json"
+    },
+    "raci": {
+      "enabled": false,
+      "configPath": ".claude/org-tools/raci.json"
+    },
+    "orgMemory": {
+      "enabled": true,
+      "outputDir": ".claude/org-tools/retrospectives"
+    }
+  }
+}
